@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  name        String
+  slug        String   @unique
+  
+  whitePageUrl    String
+  blackPageUrl    String
+  whitePageType   String  @default("url")
+  blackPageType   String  @default("url")
+  whitePageHtml   String?
+  blackPageHtml   String?
+  
+  threshold       Int     @default(40)
+  checkUserAgent  Boolean @default(true)
+  checkIP         Boolean @default(true)
+  checkFingerprint Boolean @default(true)
+  checkReferer    Boolean @default(true)
+  
+  allowedCountries String?
+  blockedCountries String?
+  allowedIPs      String?
+  blockedIPs      String?
+  
+  isActive    Boolean @default(true)
+  
+  views       Int     @default(0)
+  blocked     Int     @default(0)
+  conversions Int     @default(0)
+  
+  requests    Request[]
+  
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Request {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  
+  campaignId     String?
+  campaign       Campaign? @relation(fields: [campaignId], references: [id])
+  
+  ip             String
+  userAgent      String
+  referer        String?
+  path           String
+  
+  suspicionScore Int
+  isBlocked      Boolean
+  pageServed     String
+  
+  fingerprint    String?
+  
+  country        String?
+  city           String?
+  
+  isProxy        Boolean  @default(false)
+  isVPN          Boolean  @default(false)
+  isDatacenter   Boolean  @default(false)
+  fraudScore     Int?
+  
+  variant        String?
+  
+  converted      Boolean  @default(false)
+  conversionId   String?
+  
+  @@index([createdAt])
+  @@index([campaignId])
+  @@index([isBlocked])
+  @@index([ip])
+}
+
+model Conversion {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  requestId   String?
+  campaignId  String?
+  ip          String
+  value       Float?
+  variant     String?
+  
+  @@index([createdAt])
+  @@index([campaignId])
+}
